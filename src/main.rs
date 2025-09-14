@@ -49,6 +49,10 @@ async fn main() {
     let routes = login_route
         .or(user_route)
         .or(admin_route)
-        .recover()
+        .recover(error::handle_rejection);
+
+    warp::serve(routes).run(([127, 0, 0, 1], 8000))
 
 }
+
+fn with_use
