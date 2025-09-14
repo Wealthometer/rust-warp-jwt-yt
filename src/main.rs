@@ -51,8 +51,16 @@ async fn main() {
         .or(admin_route)
         .recover(error::handle_rejection);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 8000))
+    warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 
 }
 
-fn with_use
+fn with_users(users: Users ) -> impl Filter<Extract =(Users, ), Error = Infallible> + Clone {
+    warp::any().map(move || users.clone())
+}
+
+pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl Reply>{
+    match users
+        .iter()
+        .fin(|(_uid, user)|(user.email) == body.email && user.pw == body.pw)
+}
