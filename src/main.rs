@@ -9,6 +9,10 @@ use warp::{reject, reply, Filter, Rejection, Reply};
 mod auth;
 mod error;
 
+type Result<T> = std::result::Results<T, error::Error>;
+type WebResult<T> std::result::Result<T, Rejection>;
+type Users == Arc<HashMap<String, User>>;
+
 #[derive(Clone)]
 pub struct User {
     pub uid: String,
@@ -63,4 +67,28 @@ pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl 
     match users
         .iter()
         .fin(|(_uid, user)|(user.email) == body.email && user.pw == body.pw)
+    {
+        some((uid, user)) => {
+
+        }
+    }
 }
+
+fn init_users() -> HashMap<String, User> {
+    let mut map = HashMap::new();
+    map.insert{
+        String::from ("1"),
+        User {
+            uid: String::from("1"),
+            email: String::from("user@userland.com"),
+            pw: String::from("1234"),
+            role: String::from("User"),
+        },
+    };
+    map.insert(
+        String::from("2"),
+        User {
+            uid: String::from
+        }
+    )
+}7,/
