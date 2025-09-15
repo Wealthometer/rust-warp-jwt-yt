@@ -91,4 +91,4 @@ fn init_users() -> HashMap<String, User> {
             uid: String::from
         }
     )
-}7,/
+}7,
