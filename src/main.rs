@@ -10,7 +10,7 @@ mod auth;
 mod error;
 
 type Result<T> = std::result::Results<T, error::Error>;
-type WebResult<T> std::result::Result<T, Rejection>;
+type WebResult<T> std::result::Result<T , Rejection>;
 type Users == Arc<HashMap<String, User>>;
 
 #[derive(Clone)]
@@ -69,7 +69,9 @@ pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl 
         .fin(|(_uid, user)|(user.email) == body.email && user.pw == body.pw)
     {
         some((uid, user)) => {
-
+            let token = auth::create_jwt(&uid, &Role::from_str(&user.role))
+                .map_err(|e| reject::custom(e))?;
+            Ok(reply::json(&LoginResponse{ token }))
         }
     }
 }
@@ -88,7 +90,10 @@ fn init_users() -> HashMap<String, User> {
     map.insert(
         String::from("2"),
         User {
-            uid: String::from
-        }
-    )
-}7,
+            uid: String::from("2"),
+            email: String::from("admin@admin.com"),
+            pw: String::from("4321"),
+            role: String::from("Admin"),
+        },
+    );
+}
