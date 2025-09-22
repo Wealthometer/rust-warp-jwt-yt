@@ -78,6 +78,10 @@ pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl 
 }
 
 pub async fn user_handler(uid: String) -> WebResult<impl Reply> {
+    Ok(format!("Hello Admin {}", uid))
+}
+
+pub async fn admin_handler(uid: String) -> WebResult<impl Reply> {
     Ok(format!("Hello User {}", uid))
 }
 
