@@ -4,14 +4,15 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::sync::Arc;
+use std::str::FromStr;
 use warp::{reject, reply, Filter, Rejection, Reply};
 
 mod auth;
 mod error;
 
-type Result<T> = std::result::Results<T, error::Error>;
-type WebResult<T> std::result::Result<T , Rejection>;
-type Users == Arc<HashMap<String, User>>;
+type Result<T> = std::result::Result<T, error::Error>;
+type WebResult<T> = std::result::Result<T, Rejection>;
+type Users = Arc<HashMap<String, User>>;
 
 #[derive(Clone)]
 pub struct User {
@@ -34,7 +35,7 @@ pub struct LoginResponse {
 
 #[tokio::main]
 async fn main() {
-   let users = Arc::new(init_users());
+    let users = Arc::new(init_users());
 
     let login_route = warp::path!("login")
         .and(warp::post())
@@ -56,46 +57,45 @@ async fn main() {
         .recover(error::handle_rejection);
 
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
-
 }
 
-fn with_users(users: Users ) -> impl Filter<Extract =(Users, ), Error = Infallible> + Clone {
+fn with_users(users: Users) -> impl Filter<Extract = (Users,), Error = Infallible> + Clone {
     warp::any().map(move || users.clone())
 }
 
-pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl Reply>{
+pub async fn login_handler(users: Users, body: LoginRequest) -> WebResult<impl Reply> {
     match users
         .iter()
-        .fin(|(_uid, user)|(user.email) == body.email && user.pw == body.pw)
+        .find(|(_uid, user)| user.email == body.email && user.pw == body.pw)
     {
-        some((uid, user)) => {
-            let token = auth::create_jwt(&uid, &Role::from_str(&user.role))
-                .map_err(|e| reject::custom(e))?;
-            Ok(reply::json(&LoginResponse{ token }))
+        Some((uid, user)) => {
+            let token = auth::create_jwt(uid, &Role::from_str(&user.role).unwrap())
+                .map_err(reject::custom)?;
+            Ok(reply::json(&LoginResponse { token }))
         }
-        None => Err(reject::custom(WrongCredentialsError))
+        None => Err(reject::custom(WrongCredentialsError)),
     }
 }
 
 pub async fn user_handler(uid: String) -> WebResult<impl Reply> {
-    Ok(format!("Hello Admin {}", uid))
+    Ok(format!("Hello User {}", uid))
 }
 
 pub async fn admin_handler(uid: String) -> WebResult<impl Reply> {
-    Ok(format!("Hello User {}", uid))
+    Ok(format!("Hello Admin {}", uid))
 }
 
 fn init_users() -> HashMap<String, User> {
     let mut map = HashMap::new();
-    map.insert{
-        String::from ("1"),
+    map.insert(
+        String::from("1"),
         User {
             uid: String::from("1"),
             email: String::from("user@userland.com"),
             pw: String::from("1234"),
             role: String::from("User"),
         },
-    };
+    );
     map.insert(
         String::from("2"),
         User {
@@ -105,4 +105,5 @@ fn init_users() -> HashMap<String, User> {
             role: String::from("Admin"),
         },
     );
+    map
 }
