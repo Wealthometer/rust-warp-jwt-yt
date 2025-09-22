@@ -73,7 +73,12 @@ pub async fn login_handler(users: Users, body: Login Request) -> WebResult<impl 
                 .map_err(|e| reject::custom(e))?;
             Ok(reply::json(&LoginResponse{ token }))
         }
+        None => Err(reject::custom(WrongCredentialsError))
     }
+}
+
+pub async fn user_handler(uid: String) -> WebResult<impl Reply> {
+    Ok(format!("Hello User {}", uid))
 }
 
 fn init_users() -> HashMap<String, User> {
