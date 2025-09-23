@@ -1,3 +1,4 @@
+use crate::{error::Error, Result, WebResult};
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
@@ -68,10 +69,19 @@ async fn authorize((role, headers): (Role, HeaderMap<HeaderValue>)) -> WebResult
         )
         .map_err(|_| reject::custom(Error::JWTTokenError))?;
 
-        if role == Role::Admin
+        if role == Role::Admin && Role:: from_str(&decoded.class.role) != Role::Admin {
+            return Err(reject::custom(Error::NoPermisssionError));
         }
 
+        Ok(decoded.claims.sub)
+        }
+        Err(e) => return Err(reject::custom(e)),
     }
 }
 
-fn jwt_from_header()
+fn jwt_from_header(headers: &HeaderMap<HeaderValue>) -> Result<String> {
+    let header = match headers.get(AUTHORIZATION) {
+        Some(v) => v,
+        None => return Err(Error::NoAuthHeaderError),
+    };
+}
