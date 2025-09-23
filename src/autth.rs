@@ -1,6 +1,14 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use jsonwebtoken::{decode, encode, Algorithm}
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+
+use std::fmt;
+use warp::{
+    filters::header::headers_cloned,
+    http::header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    reject, Filter, Rejection
+}
+
 pub enum Role {
     User,
     Admin
