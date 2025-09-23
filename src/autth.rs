@@ -7,7 +7,10 @@ use warp::{
     filters::header::headers_cloned,
     http::header::{HeaderMap, HeaderValue, AUTHORIZATION},
     reject, Filter, Rejection
-}
+};
+
+const BEARER &strt = "Bearer";
+const JWT_SECRET: &[u8] = b"secret"
 
 #[derive(Clone, PartialEq)]
 pub enum Role {
@@ -31,6 +34,12 @@ struct Claims {
     exp: usize,
 }
 
+pub fn with_auth(role: Role) -> impl Filter<Extract = (String), Error = Rejection> + Clone {
+    headers_cloned()
+    .map(move |headers: HeaderMap<HeaderValue>| (role.clone(), headers))
+    .and_then(authorize)
+}
+
 pub fn create_jwt(uid: &str, role : &Role) -> Result<String> {
     let expiration = Utc::now()
     .checked_add_signed(chrono::Duration::seconds(60))
@@ -48,3 +57,21 @@ pub fn create_jwt(uid: &str, role : &Role) -> Result<String> {
         .map_err(|_| Error::JWTTokenCreationError)
 
 }
+
+async fn authorize((role, headers): (Role, HeaderMap<HeaderValue>)) -> WebResult<String> {
+    match jwt_from_header(&headers) {
+        Ok(jwt) => {
+            let decoded = decode::<Claims>(
+                &jwt,
+                &DecodingKey::from_secret(JWT_SECRET),
+                &Validation::new(Algorithm::HS512),
+        )
+        .map_err(|_| reject::custom(Error::JWTTokenError))?;
+
+        if role == Role::Admin
+        }
+
+    }
+}
+
+fn jwt_from_header()
