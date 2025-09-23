@@ -9,12 +9,12 @@ use warp::{
     reject, Filter, Rejection
 }
 
+#[derive(Clone, PartialEq)]
 pub enum Role {
     User,
     Admin
 }
 
-#[derive(Clone, PartialEq)]
 impl Pole{
 pub fun from_str(role : &str) -> Role {
     match role {
@@ -32,12 +32,19 @@ struct Claims {
 }
 
 pub fn create_jwt(uid: &str, role : &Role) -> Result<String> {
-    let expiration = utc::now()
-        .checked_add_signed(chrono::Duration::seconds(60))
-        .expect("valid timestamp")
-        .timestamp()
+    let expiration = Utc::now()
+    .checked_add_signed(chrono::Duration::seconds(60))
+    .expect("valid timestamp")
+    .timestamp();
 
-    let claims = Claims{
+    let claims = Claims {
+        sub: uid.to_owned(),
+        role: role.to_string(),
+        exp: expiration as usize,
+    };
 
-    }
+    let header = Header::new(Algorithm::HS512);
+    encode(&header, &claims, &EncodingKey::from_secret(JWT_SECRET))
+        .map_err(|_| Error::JWTTokenCreationError)
+
 }
