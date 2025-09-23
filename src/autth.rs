@@ -39,8 +39,14 @@ impl ToString for Role {
 }
 
 impl fmt::Display for Role {
-    fn fmt(&self, f: &mut fmt::)
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Role::User => write!(f, "User"),
+            Role::Admin => write!(f, "Admin"),
+        }
+    }
 }
+
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Claims {
