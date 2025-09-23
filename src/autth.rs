@@ -2,6 +2,7 @@ use crate::{error::Error, Result, WebResult};
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+
 use std::fmt;
 use warp::{
     filters::header::headers_cloned,
@@ -17,6 +18,7 @@ pub enum Role {
     User,
     Admin,
 }
+
 
 impl Role {
     pub fn from_str(role: &str) -> Self {
