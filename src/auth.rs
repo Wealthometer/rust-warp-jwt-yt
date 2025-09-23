@@ -2,8 +2,8 @@ use crate::{error::Error, Result, WebResult};
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-
 use std::fmt;
+// use std::str::FromStr;
 use warp::{
     filters::header::headers_cloned,
     http::header::{HeaderMap, HeaderValue, AUTHORIZATION},
@@ -11,14 +11,13 @@ use warp::{
 };
 
 const BEARER: &str = "Bearer";
-const JWT_SECRET: &[u8] = b"secret";
+const JWT_SECRET: &[u8] = b"super-secret-key";
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Role {
     User,
     Admin,
 }
-
 
 impl Role {
     pub fn from_str(role: &str) -> Self {
@@ -29,24 +28,14 @@ impl Role {
     }
 }
 
-impl ToString for Role {
-    fn to_string(&self) -> String {
-        match self {
-            Role::Admin => "Admin".to_string(),
-            Role::User => "User".to_string(),
-        }
-    }
-}
-
 impl fmt::Display for Role {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Role::User => write!(f, "User"),
             Role::Admin => write!(f, "Admin"),
-        }
-    }
+        }
+    }
 }
-
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Claims {
@@ -63,7 +52,7 @@ pub fn with_auth(role: Role) -> impl Filter<Extract = (String,), Error = Rejecti
 
 pub fn create_jwt(uid: &str, role: &Role) -> Result<String> {
     let expiration = Utc::now()
-        .checked_add_signed(chrono::Duration::seconds(60))
+        .checked_add_signed(chrono::Duration::seconds(60 * 10))
         .expect("valid timestamp")
         .timestamp();
 
@@ -99,19 +88,16 @@ async fn authorize((role, headers): (Role, HeaderMap<HeaderValue>)) -> WebResult
 }
 
 fn jwt_from_header(headers: &HeaderMap<HeaderValue>) -> Result<String> {
-    let header = match headers.get(AUTHORIZATION) {
-        Some(v) => v,
-        None => return Err(Error::NoAuthHeaderError),
-    };
-    
-    let auth_header = match std::str::from_utf8(header.as_bytes()) {
-        Ok(v) => v,
-        Err(_) => return Err(Error::NoAuthHeaderError),
-    };
+    let header = headers
+        .get(AUTHORIZATION)
+        .ok_or(Error::NoAuthHeaderError)?;
+
+    let auth_header = std::str::from_utf8(header.as_bytes())
+        .map_err(|_| Error::NoAuthHeaderError)?;
 
     if !auth_header.starts_with(BEARER) {
         return Err(Error::InvalidAuthHeaderError);
     }
 
-    Ok(auth_header.trim_start_matches(BEARER).to_owned())
+    Ok(auth_header.trim_start_matches(BEARER).trim().to_owned())
 }

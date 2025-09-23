@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::Infallible;
 use std::sync::Arc;
-use std::str::FromStr;
 use warp::{reject, reply, Filter, Rejection, Reply};
 
 mod auth;
@@ -43,6 +42,7 @@ async fn main() {
         .and(warp::body::json())
         .and_then(login_handler);
 
+
     let user_route = warp::path!("user")
         .and(with_auth(Role::User))
         .and_then(user_handler);
@@ -56,6 +56,7 @@ async fn main() {
         .or(admin_route)
         .recover(error::handle_rejection);
 
+    println!("🚀 Server running on http://127.0.0.1:8000");
     warp::serve(routes).run(([127, 0, 0, 1], 8000)).await;
 }
 
@@ -69,8 +70,9 @@ pub async fn login_handler(users: Users, body: LoginRequest) -> WebResult<impl R
         .find(|(_uid, user)| user.email == body.email && user.pw == body.pw)
     {
         Some((uid, user)) => {
-            let token = auth::create_jwt(uid, &Role::from_str(&user.role).unwrap())
-                .map_err(reject::custom)?;
+            // ✅ no unwrap_or needed, Role::from_str always returns a Role
+            let role = Role::from_str(&user.role);
+            let token = auth::create_jwt(uid, &role).map_err(reject::custom)?;
             Ok(reply::json(&LoginResponse { token }))
         }
         None => Err(reject::custom(WrongCredentialsError)),
@@ -87,23 +89,27 @@ pub async fn admin_handler(uid: String) -> WebResult<impl Reply> {
 
 fn init_users() -> HashMap<String, User> {
     let mut map = HashMap::new();
+
     map.insert(
-        String::from("1"),
+        "1".to_string(),
         User {
-            uid: String::from("1"),
-            email: String::from("user@userland.com"),
-            pw: String::from("1234"),
-            role: String::from("User"),
+            uid: "1".to_string(),
+            email: "user@userland.com".to_string(),
+            pw: "1234".to_string(),
+            role: "User".to_string(),
+
         },
     );
+
     map.insert(
-        String::from("2"),
+        "2".to_string(),
         User {
-            uid: String::from("2"),
-            email: String::from("admin@admin.com"),
-            pw: String::from("4321"),
-            role: String::from("Admin"),
+            uid: "2".to_string(),
+            email: "admin@admin.com".to_string(),
+            pw: "4321".to_string(),
+            role: "Admin".to_string(),
         },
     );
+
     map
 }
