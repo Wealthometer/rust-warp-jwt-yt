@@ -65,12 +65,12 @@ fn with_users(users: Users) -> impl Filter<Extract = (Users,), Error = Infallibl
 }
 
 pub async fn login_handler(users: Users, body: LoginRequest) -> WebResult<impl Reply> {
+    println!("🔑 Login attempt: {} / {}", body.email, body.pw);
     match users
         .iter()
         .find(|(_uid, user)| user.email == body.email && user.pw == body.pw)
     {
         Some((uid, user)) => {
-            // ✅ no unwrap_or needed, Role::from_str always returns a Role
             let role = Role::from_str(&user.role);
             let token = auth::create_jwt(uid, &role).map_err(reject::custom)?;
             Ok(reply::json(&LoginResponse { token }))
@@ -78,6 +78,7 @@ pub async fn login_handler(users: Users, body: LoginRequest) -> WebResult<impl R
         None => Err(reject::custom(WrongCredentialsError)),
     }
 }
+
 
 pub async fn user_handler(uid: String) -> WebResult<impl Reply> {
     Ok(format!("Hello User {}", uid))
